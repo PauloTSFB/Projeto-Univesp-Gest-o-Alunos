@@ -21,6 +21,10 @@ public class AlunoService {
             throw new IllegalArgumentException("O nome do aluno é obrigatório.");
         }
         
+        if (aluno.getAnamnese() != null) {
+            aluno.getAnamnese().setAluno(aluno);
+        }
+        
      // Amarra o aluno em cada mensalidade da lista para o chaveamento correto (aluno_id)
         if (aluno.getMensalidades() != null) {
             for (Mensalidade m : aluno.getMensalidades()) {

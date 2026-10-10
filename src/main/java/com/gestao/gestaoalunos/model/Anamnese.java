@@ -19,7 +19,7 @@ public class Anamnese {
     private String restricoes;
 
     @OneToOne
-    @JoinColumn(name = "aluno_id", nullable = false)
+    @JoinColumn(name = "aluno_id")
     private Aluno aluno;
 
     // Construtor Padrão (Obrigatório para o JPA)

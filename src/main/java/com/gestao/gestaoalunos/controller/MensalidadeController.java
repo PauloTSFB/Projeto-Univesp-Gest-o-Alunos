@@ -1,6 +1,7 @@
 package com.gestao.gestaoalunos.controller;
 
 import java.math.BigDecimal;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import java.time.LocalDate;
 import java.util.List;
 

@@ -43,6 +43,31 @@
         <div class="kpi-sub">Agendados para hoje</div>
       </div>
     </section>
+	
+	<!-- Seção de Alunos Cadastrados (Nome e Celular) -->
+	    <section class="card" style="margin-bottom: 2rem;">
+	      <div class="card-header">
+	        <h2>Alunos Cadastrados</h2>
+	        <span class="kpi-sub" id="total-alunos-sub">Carregando...</span>
+	      </div>
+	      
+	      <div class="table-container">
+	        <table class="data-table">
+	          <thead>
+	            <tr>
+	              <th>Nome</th>
+	              <th>Celular / Telefone</th>
+	              <th>Ações</th>
+	            </tr>
+	          </thead>
+	          <tbody id="tabela-alunos">
+	            <tr>
+	              <td colspan="3" class="text-center">Carregando alunos...</td>
+	            </tr>
+	          </tbody>
+	        </table>
+	      </div>
+	    </section>
 
     <!-- Grid de Conteúdo Principal -->
     <div class="dashboard-grid">
@@ -104,7 +129,44 @@
 
   </main>
 
-  <script src="js/api.js"></script>
-  <script src="js/app.js"></script>
+  <script>
+      window.onload = function() {
+        fetch('http://localhost:8081/alunos')
+          .then(function(resposta) {
+            return resposta.json();
+          })
+          .then(function(alunos) {
+            // 1. Atualiza o número de alunos no card de cima (KPI)
+            document.getElementById('kpi-total-alunos').textContent = alunos.length;
+
+            // 2. Atualiza o subtítulo da tabela
+            document.getElementById('total-alunos-sub').textContent = 'Total: ' + alunos.length + ' aluno(s)';
+
+            var tbody = document.getElementById('tabela-alunos');
+            tbody.innerHTML = ''; 
+
+            if (alunos.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="3" class="text-center">Nenhum aluno cadastrado.</td></tr>';
+              return;
+            }
+
+            for (var i = 0; i < alunos.length; i++) {
+              var aluno = alunos[i];
+              
+              tbody.innerHTML += '<tr>' +
+                '<td><strong>' + (aluno.nome || '') + '</strong></td>' +
+                '<td>' + (aluno.telefone || '') + '</td>' +
+                '<td><a href="aluno-detalhes.html?id=' + aluno.id + '" class="btn-secondary">Ver Detalhes</a></td>' +
+              '</tr>';
+            }
+          })
+          .catch(function(erro) {
+            console.log("Erro ao buscar:", erro);
+          });
+      };
+    </script>
+	
+	<a href="novo-aluno.html" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block;">+ Novo Aluno</a>
+	
 </body>
 </html>

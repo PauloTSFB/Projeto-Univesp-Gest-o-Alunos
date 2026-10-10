@@ -11,6 +11,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
 public class Aluno {
 
@@ -24,9 +26,11 @@ public class Aluno {
     private LocalDate dataNascimento;
 
     @OneToOne(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("aluno")
     private Anamnese anamnese;
 
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("aluno")
     private List<Mensalidade> mensalidades = new ArrayList<>();
 
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
