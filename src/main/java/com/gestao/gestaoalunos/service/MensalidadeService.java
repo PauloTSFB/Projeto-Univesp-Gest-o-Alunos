@@ -79,4 +79,16 @@ public class MensalidadeService {
         Mensalidade mensalidade = buscarPorId(id);
         mensalidadeRepository.delete(mensalidade);
     }
+    
+    public List<Mensalidade> buscarVencendosNaSemana() {
+        LocalDate hoje = LocalDate.now();
+        LocalDate daquiAProximosSeteDias = hoje.plusDays(7);
+        
+        return mensalidadeRepository.findByDataVencimentoBetweenAndStatus(
+                hoje, 
+                daquiAProximosSeteDias, 
+                StatusPagamento.PENDENTE
+            );
+    }
+    
 }

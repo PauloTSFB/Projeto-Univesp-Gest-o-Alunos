@@ -3,6 +3,7 @@ package com.gestao.gestaoalunos.service;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import com.gestao.gestaoalunos.model.Aluno;
+import com.gestao.gestaoalunos.model.Mensalidade;
 import com.gestao.gestaoalunos.repository.AlunoRepository;
 
 @Service
@@ -19,6 +20,14 @@ public class AlunoService {
         if (aluno.getNome() == null || aluno.getNome().trim().isEmpty()) {
             throw new IllegalArgumentException("O nome do aluno é obrigatório.");
         }
+        
+     // Amarra o aluno em cada mensalidade da lista para o chaveamento correto (aluno_id)
+        if (aluno.getMensalidades() != null) {
+            for (Mensalidade m : aluno.getMensalidades()) {
+                m.setAluno(aluno);
+            }
+        }
+        
         return alunoRepository.save(aluno);
     }
 

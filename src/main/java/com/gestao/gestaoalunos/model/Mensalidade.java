@@ -1,6 +1,7 @@
 package com.gestao.gestaoalunos.model;
 
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
@@ -28,6 +29,7 @@ public class Mensalidade {
 
     @ManyToOne
     @JoinColumn(name = "aluno_id", nullable = false)
+    @JsonIgnoreProperties("mensalidades") // Evita recursão infinita no JSON
     private Aluno aluno;
 
     // Construtor Padrão (Obrigatório para o JPA)
