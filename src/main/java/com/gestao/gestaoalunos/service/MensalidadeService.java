@@ -4,11 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.gestao.gestaoalunos.model.Aluno;
-import com.gestao.gestaoalunos.model.StatusPagamento;
 import com.gestao.gestaoalunos.model.Mensalidade;
+import com.gestao.gestaoalunos.model.StatusPagamento;
 import com.gestao.gestaoalunos.repository.AlunoRepository;
 import com.gestao.gestaoalunos.repository.MensalidadeRepository;
 
@@ -19,13 +20,12 @@ public class MensalidadeService {
 
     private final MensalidadeRepository mensalidadeRepository;
     private final AlunoRepository alunoRepository;
-    
-    
 
     public MensalidadeService(MensalidadeRepository mensalidadeRepository, AlunoRepository alunoRepository) {
         this.mensalidadeRepository = mensalidadeRepository;
         this.alunoRepository = alunoRepository;
     }
+
     @Transactional
     public List<Mensalidade> gerarPlanoAnual(Long alunoId, BigDecimal valorMensal, LocalDate primeiroVencimento) {
         Aluno aluno = alunoRepository.findById(alunoId)
@@ -46,7 +46,7 @@ public class MensalidadeService {
         return mensalidadeRepository.saveAll(mensalidades);
     }
 
-    // --- 3. REGISTRAR PAGAMENTO (DAR BAIXA) ---
+    // --- REGISTRAR PAGAMENTO (DAR BAIXA) ---
     @Transactional
     public Mensalidade registrarPagamento(Long mensalidadeId) {
         Mensalidade mensalidade = buscarPorId(mensalidadeId);
@@ -56,11 +56,21 @@ public class MensalidadeService {
         return mensalidadeRepository.save(mensalidade);
     }
 
-    
+    // --- BUSCAR MENSALIDADES VENCENDO NA SEMANA (PRÓXIMOS 7 DIAS) ---
+    public List<Mensalidade> buscarVencendosNaSemana() {
+        LocalDate hoje = LocalDate.now();
+        LocalDate daquiAProximosSeteDias = hoje.plusDays(7);
+
+        return mensalidadeRepository.findByDataVencimentoBetweenAndStatus(
+                hoje,
+                daquiAProximosSeteDias,
+                StatusPagamento.PENDENTE
+        );
+    }
+
     public List<Mensalidade> listarPorAluno(Long alunoId) {
         return mensalidadeRepository.findByAlunoId(alunoId);
     }
-
 
     public Mensalidade salvar(Mensalidade mensalidade) {
         return mensalidadeRepository.save(mensalidade);
@@ -79,16 +89,4 @@ public class MensalidadeService {
         Mensalidade mensalidade = buscarPorId(id);
         mensalidadeRepository.delete(mensalidade);
     }
-    
-    public List<Mensalidade> buscarVencendosNaSemana() {
-        LocalDate hoje = LocalDate.now();
-        LocalDate daquiAProximosSeteDias = hoje.plusDays(7);
-        
-        return mensalidadeRepository.findByDataVencimentoBetweenAndStatus(
-                hoje, 
-                daquiAProximosSeteDias, 
-                StatusPagamento.PENDENTE
-            );
-    }
-    
 }

@@ -130,41 +130,117 @@
   </main>
 
   <script>
-      window.onload = function() {
-        fetch('http://localhost:8081/alunos')
-          .then(function(resposta) {
-            return resposta.json();
+        window.onload = function() {
+          
+          // ==========================================
+          // 1. CARREGAR ALUNOS E PREENCHER A TABELA / KPI
+          // ==========================================
+          fetch('http://localhost:8081/alunos')
+            .then(function(resposta) {
+              return resposta.json();
+            })
+            .then(function(alunos) {
+              document.getElementById('kpi-total-alunos').textContent = alunos.length;
+              document.getElementById('total-alunos-sub').textContent = 'Total: ' + alunos.length + ' aluno(s)';
+
+              var tbody = document.getElementById('tabela-alunos');
+              tbody.innerHTML = ''; 
+
+              if (alunos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center">Nenhum aluno cadastrado.</td></tr>';
+                return;
+              }
+
+              for (var i = 0; i < alunos.length; i++) {
+                var aluno = alunos[i];
+                tbody.innerHTML += '<tr>' +
+                  '<td><strong>' + (aluno.nome || '') + '</strong></td>' +
+                  '<td>' + (aluno.telefone || '') + '</td>' +
+                  '<td><a href="aluno-detalhes.html?id=' + aluno.id + '" class="btn-secondary">Ver Detalhes</a></td>' +
+                '</tr>';
+              }
+            })
+            .catch(function(erro) {
+              console.log("Erro ao buscar alunos:", erro);
+            });
+
+
+          // ==========================================
+          // 2. CARREGAR MENSALIDADES VENCENDO NA SEMANA
+          // ==========================================
+          carregarVencimentosSemana();
+
+          // Botão "Atualizar" da tabela de mensalidades
+          var btnAtualizar = document.getElementById('btn-atualizar-mensalidades');
+          if (btnAtualizar) {
+            btnAtualizar.onclick = carregarVencimentosSemana;
+          }
+        };
+
+        // Função separada para reutilizar no carregamento e no botão de atualizar
+        function carregarVencimentosSemana() {
+          fetch('http://localhost:8081/mensalidades/vencendo-semana')
+            .then(function(resposta) {
+              return resposta.json();
+            })
+            .then(function(mensalidades) {
+              // Atualiza o KPI laranja com a quantidade de vencimentos
+              document.getElementById('kpi-vencendo-semana').textContent = mensalidades.length;
+
+              var tbody = document.getElementById('tabela-vencimentos');
+              tbody.innerHTML = '';
+
+              if (mensalidades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma mensalidade vencendo nos próximos 7 dias.</td></tr>';
+                return;
+              }
+
+              for (var i = 0; i < mensalidades.length; i++) {
+                var m = mensalidades[i];
+                
+                // Formata a data (YYYY-MM-DD para DD/MM/YYYY)
+                var dataFmt = m.dataVencimento ? new Date(m.dataVencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '';
+                var nomeAluno = m.aluno ? m.aluno.nome : 'N/A';
+                var valorFormatado = 'R$ ' + Number(m.valor).toFixed(2).replace('.', ',');
+
+                tbody.innerHTML += '<tr>' +
+                  '<td><strong>' + nomeAluno + '</strong></td>' +
+                  '<td>' + dataFmt + '</td>' +
+                  '<td>' + valorFormatado + '</td>' +
+                  '<td><span class="badge">' + m.status + '</span></td>' +
+                  '<td><button onclick="registrarPagamento(' + m.id + ')" class="btn-secondary" style="padding: 4px 8px; font-size: 12px;">Dar Baixa</button></td>' +
+                '</tr>';
+              }
+            })
+            .catch(function(erro) {
+              console.log("Erro ao buscar mensalidades:", erro);
+            });
+        }
+
+        // ==========================================
+        // 3. FUNÇÃO PARA DAR BAIXA NO PAGAMENTO
+        // ==========================================
+        function registrarPagamento(idMensalidade) {
+          if (!confirm("Deseja registrar o pagamento desta mensalidade?")) {
+            return;
+          }
+
+          fetch('http://localhost:8081/mensalidades/' + idMensalidade + '/pagar', {
+            method: 'PUT'
           })
-          .then(function(alunos) {
-            // 1. Atualiza o número de alunos no card de cima (KPI)
-            document.getElementById('kpi-total-alunos').textContent = alunos.length;
-
-            // 2. Atualiza o subtítulo da tabela
-            document.getElementById('total-alunos-sub').textContent = 'Total: ' + alunos.length + ' aluno(s)';
-
-            var tbody = document.getElementById('tabela-alunos');
-            tbody.innerHTML = ''; 
-
-            if (alunos.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="3" class="text-center">Nenhum aluno cadastrado.</td></tr>';
-              return;
-            }
-
-            for (var i = 0; i < alunos.length; i++) {
-              var aluno = alunos[i];
-              
-              tbody.innerHTML += '<tr>' +
-                '<td><strong>' + (aluno.nome || '') + '</strong></td>' +
-                '<td>' + (aluno.telefone || '') + '</td>' +
-                '<td><a href="aluno-detalhes.html?id=' + aluno.id + '" class="btn-secondary">Ver Detalhes</a></td>' +
-              '</tr>';
+          .then(function(resposta) {
+            if (resposta.ok) {
+              alert("Pagamento registrado com sucesso!");
+              carregarVencimentosSemana(); // Recarrega a tabela e o KPI automaticamente
+            } else {
+              alert("Erro ao registrar pagamento.");
             }
           })
           .catch(function(erro) {
-            console.log("Erro ao buscar:", erro);
+            console.log("Erro na requisição de pagamento:", erro);
           });
-      };
-    </script>
+        }
+      </script>
 	
 	<a href="novo-aluno.html" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block;">+ Novo Aluno</a>
 	
