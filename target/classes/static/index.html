@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Gestão de Alunos</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Barra de Navegação / Cabeçalho -->
+  <header class="navbar">
+    <div class="brand">
+      <h1>Sistema de Gestão</h1>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html" class="active">Dashboard</a>
+      <a href="#alunos">Alunos</a>
+      <a href="#mensalidades">Mensalidades</a>
+      <a href="#atendimentos">Atendimentos</a>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <!-- Seção de Métricas / KPIs -->
+    <section class="kpi-grid">
+      <div class="kpi-card blue">
+        <div class="kpi-title">Alunos Cadastrados</div>
+        <div class="kpi-value" id="kpi-total-alunos">--</div>
+        <div class="kpi-sub">Total na base de dados</div>
+      </div>
+
+      <div class="kpi-card orange">
+        <div class="kpi-title">Vencimentos da Semana</div>
+        <div class="kpi-value" id="kpi-vencendo-semana">--</div>
+        <div class="kpi-sub">Mensalidades a receber</div>
+      </div>
+
+      <div class="kpi-card green">
+        <div class="kpi-title">Atendimentos de Hoje</div>
+        <div class="kpi-value" id="kpi-atendimentos-hoje">0</div>
+        <div class="kpi-sub">Agendados</div>
+      </div>
+    </section>
+	
+	<!-- Seção de Alunos Cadastrados (Nome e Celular) -->
+	    <section class="card" style="margin-bottom: 2rem;">
+	      <div class="card-header">
+	        <h2>Alunos Cadastrados</h2>
+	        <span class="kpi-sub" id="total-alunos-sub">Carregando...</span>
+	      </div>
+	      
+	      <div class="table-container">
+	        <table class="data-table">
+	          <thead>
+	            <tr>
+	              <th>Nome</th>
+	              <th>Celular / Telefone</th>
+	              <th>Ações</th>
+	            </tr>
+	          </thead>
+	          <tbody id="tabela-alunos">
+	            <tr>
+	              <td colspan="3" class="text-center">Carregando alunos...</td>
+	            </tr>
+	          </tbody>
+	        </table>
+	      </div>
+	    </section>
+
+    <!-- Grid de Conteúdo Principal -->
+    <div class="dashboard-grid">
+
+      <!-- Coluna 1: Alertas de Mensalidades (Vencendo na Semana) -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Mensalidades Vencendo na Semana</h2>
+          <button id="btn-atualizar-mensalidades" class="btn-secondary">Atualizar</button>
+        </div>
+        
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Aluno</th>
+                <th>Vencimento</th>
+                <th>Valor</th>
+                <th>Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-vencimentos">
+              <tr>
+                <td colspan="5" class="text-center">Carregando mensalidades...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Coluna 2: Agenda de Atendimentos do Dia -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Agenda de Atendimentos</h2>
+          <span class="badge-date" id="data-hoje">--/--/----</span>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Horário</th>
+                <th>Aluno / Cliente</th>
+                <th>Serviço / Nota</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-atendimentos">
+              <tr>
+                <td colspan="4" class="text-center">Carregando atendimentos...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <script>
+        window.onload = function() {
+          
+          // Exibe a data de hoje formatada no badge
+          const hoje = new Date();
+          document.getElementById('data-hoje').textContent = hoje.toLocaleDateString('pt-BR');
+
+          // ==========================================
+          // 1. CARREGAR ALUNOS E PREENCHER A TABELA / KPI
+          // ==========================================
+          fetch('http://localhost:8081/alunos')
+            .then(function(resposta) {
+              return resposta.json();
+            })
+            .then(function(alunos) {
+              document.getElementById('kpi-total-alunos').textContent = alunos.length;
+              document.getElementById('total-alunos-sub').textContent = 'Total: ' + alunos.length + ' aluno(s)';
+
+              var tbody = document.getElementById('tabela-alunos');
+              tbody.innerHTML = ''; 
+
+              if (alunos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center">Nenhum aluno cadastrado.</td></tr>';
+                return;
+              }
+
+              for (var i = 0; i < alunos.length; i++) {
+                var aluno = alunos[i];
+                tbody.innerHTML += '<tr>' +
+                  '<td><strong>' + (aluno.nome || '') + '</strong></td>' +
+                  '<td>' + (aluno.telefone || '') + '</td>' +
+                  '<td><a href="aluno-detalhes.html?id=' + aluno.id + '" class="btn-secondary">Ver Detalhes</a></td>' +
+                '</tr>';
+              }
+            })
+            .catch(function(erro) {
+              console.log("Erro ao buscar alunos:", erro);
+            });
+
+
+          // ==========================================
+          // 2. CARREGAR MENSALIDADES VENCENDO NA SEMANA
+          // ==========================================
+          carregarVencimentosSemana();
+
+          var btnAtualizar = document.getElementById('btn-atualizar-mensalidades');
+          if (btnAtualizar) {
+            btnAtualizar.onclick = carregarVencimentosSemana;
+          }
+
+          // ==========================================
+          // 3. CARREGAR ATENDIMENTOS / AGENDAMENTOS
+          // ==========================================
+          carregarAtendimentos();
+        };
+
+        function carregarVencimentosSemana() {
+          fetch('http://localhost:8081/mensalidades/vencendo-semana')
+            .then(function(resposta) {
+              return resposta.json();
+            })
+            .then(function(mensalidades) {
+              document.getElementById('kpi-vencendo-semana').textContent = mensalidades.length;
+
+              var tbody = document.getElementById('tabela-vencimentos');
+              tbody.innerHTML = '';
+
+              if (mensalidades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma mensalidade vencendo nos próximos 7 dias.</td></tr>';
+                return;
+              }
+
+              for (var i = 0; i < mensalidades.length; i++) {
+                var m = mensalidades[i];
+                var dataFmt = m.dataVencimento ? new Date(m.dataVencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '';
+                var nomeAluno = m.aluno ? m.aluno.nome : 'N/A';
+                var valorFormatado = 'R$ ' + Number(m.valor).toFixed(2).replace('.', ',');
+
+                tbody.innerHTML += '<tr>' +
+                  '<td><strong>' + nomeAluno + '</strong></td>' +
+                  '<td>' + dataFmt + '</td>' +
+                  '<td>' + valorFormatado + '</td>' +
+                  '<td><span class="badge">' + m.status + '</span></td>' +
+                  '<td><button onclick="registrarPagamento(' + m.id + ')" class="btn-secondary" style="padding: 4px 8px; font-size: 12px;">Dar Baixa</button></td>' +
+                '</tr>';
+              }
+            })
+            .catch(function(erro) {
+              console.log("Erro ao buscar mensalidades:", erro);
+            });
+        }
+
+        function registrarPagamento(idMensalidade) {
+          if (!confirm("Deseja registrar o pagamento desta mensalidade?")) {
+            return;
+          }
+
+          fetch('http://localhost:8081/mensalidades/' + idMensalidade + '/pagar', {
+            method: 'PUT'
+          })
+          .then(function(resposta) {
+            if (resposta.ok) {
+              alert("Pagamento registrado com sucesso!");
+              carregarVencimentosSemana();
+            } else {
+              alert("Erro ao registrar pagamento.");
+            }
+          })
+          .catch(function(erro) {
+            console.log("Erro na requisição de pagamento:", erro);
+          });
+        }
+
+        function carregarAtendimentos() {
+          // Ajusta para o endpoint '/api/atendimentos' ou '/atendimentos' conforme o teu Controller
+          fetch('http://localhost:8081/api/atendimentos')
+            .then(function(resposta) {
+              return resposta.json();
+            })
+            .then(function(atendimentos) {
+              document.getElementById('kpi-atendimentos-hoje').textContent = atendimentos.length;
+
+              var tbody = document.getElementById('tabela-atendimentos');
+              tbody.innerHTML = '';
+
+              if (atendimentos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum atendimento agendado.</td></tr>';
+                return;
+              }
+
+              for (var i = 0; i < atendimentos.length; i++) {
+                var at = atendimentos[i];
+                var dataHoraFmt = at.dataHora ? at.dataHora.replace('T', ' ' ) : '';
+                var nomeAluno = at.aluno ? at.aluno.nome : 'Cliente Geral';
+
+                tbody.innerHTML += '<tr>' +
+                  '<td>' + dataHoraFmt + '</td>' +
+                  '<td><strong>' + nomeAluno + '</strong></td>' +
+                  '<td>' + (at.observacao || 'Atendimento padrão') + '</td>' +
+                  '<td><span class="badge">Agendado</span></td>' +
+                '</tr>';
+              }
+            })
+            .catch(function(erro) {
+              console.log("Erro ao buscar atendimentos:", erro);
+              document.getElementById('tabela-atendimentos').innerHTML = '<tr><td colspan="4" class="text-center">Erro ao carregar agendamentos.</td></tr>';
+            });
+        }
+      </script>
+	
+	<div style="margin-top: 2rem;">
+	  <a href="novo-aluno.html" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block;">+ Novo Aluno</a>
+	  <a href="agendamento.html" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block; margin-left: 10px; background-color: #007bff; color: white;">+ Novo Agendamento</a>
+	</div>
+	
+</body>
+</html>
