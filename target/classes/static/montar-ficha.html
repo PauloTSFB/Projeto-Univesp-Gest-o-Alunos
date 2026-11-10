@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Montar Ficha de Treino - Sistema de Gestão</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Biblioteca html2pdf para gerar o PDF no navegador -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+  <!-- Barra de Navegação / Cabeçalho -->
+  <header class="navbar">
+    <div class="brand">
+      <h1>Sistema de Gestão</h1>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html">Dashboard</a>
+      <a href="index.html#alunos">Alunos</a>
+    </nav>
+  </header>
+
+  <main class="container" style="max-width: 650px; margin-top: 2rem;">
+    
+    <div class="card">
+      <div class="card-header">
+        <h2>Montar Ficha de Treino</h2>
+      </div>
+
+      <form id="form-ficha" style="padding: 1.5rem;">
+        
+        <!-- BARRA 1: Escolher o Aluno cadastrado -->
+        <div style="margin-bottom: 1.5rem;">
+          <label for="select-aluno" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Selecione o Aluno:</label>
+          <select id="select-aluno" name="alunoId" required style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px;">
+            <option value="">Carregando alunos cadastrados...</option>
+          </select>
+        </div>
+
+        <!-- BARRA 2: Seleção múltipla de Exercícios Pré-fixados -->
+        <div style="margin-bottom: 1.5rem;">
+          <label for="select-exercicios" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+            Selecione os Exercícios (Segure CTRL ou SHIFT para escolher vários):
+          </label>
+          <select id="select-exercicios" name="exercicios" multiple size="6" required style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px;">
+            <option value="Supino Reto">Supino Reto</option>
+            <option value="Supino Inclinado">Supino Inclinado</option>
+            <option value="Puxada Alta">Puxada Alta</option>
+            <option value="Remada Curvada">Remada Curvada</option>
+            <option value="Desenvolvimento com Halteres">Desenvolvimento com Halteres</option>
+            <option value="Rosca Direta">Rosca Direta</option>
+            <option value="Tríceps Testa">Tríceps Testa</option>
+            <option value="Leg Press 45º">Leg Press 45º</option>
+            <option value="Cadeira Extensora">Cadeira Extensora</option>
+            <option value="Mesa Flexora">Mesa Flexora</option>
+          </select>
+          <small style="display: block; color: #666; margin-top: 4px;">Dica: você pode selecionar mais de uma linha da lista acima.</small>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" class="btn-secondary" style="background-color: #28a745; color: white; border: none; padding: 0.75rem 1.5rem; cursor: pointer; border-radius: 4px; font-weight: bold;">
+            📄 Gerar PDF da Ficha
+          </button>
+          <a href="index.html" class="btn-secondary" style="background-color: #6c757d; color: white; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 4px; display: inline-block; text-align: center;">Voltar</a>
+        </div>
+
+      </form>
+    </div>
+
+  </main>
+
+  <script>
+    window.onload = function() {
+      // 1. Busca os alunos na API do Spring Boot para popular a primeira barra
+      fetch('http://localhost:8081/alunos')
+        .then(function(resposta) {
+          return resposta.json();
+        })
+        .then(function(alunos) {
+          var selectAluno = document.getElementById('select-aluno');
+          selectAluno.innerHTML = '<option value="">-- Selecione um aluno cadastrado --</option>';
+
+          if (alunos.length === 0) {
+            selectAluno.innerHTML = '<option value="">Nenhum aluno cadastrado no sistema</option>';
+            return;
+          }
+
+          for (var i = 0; i < alunos.length; i++) {
+            var aluno = alunos[i];
+            var option = document.createElement('option');
+            option.value = aluno.nome; // Armazena o nome direto no valor do select para o PDF
+            option.textContent = aluno.nome;
+            selectAluno.appendChild(option);
+          }
+        })
+        .catch(function(erro) {
+          console.log("Erro ao carregar alunos para o select:", erro);
+          document.getElementById('select-aluno').innerHTML = '<option value="">Erro ao carregar alunos</option>';
+        });
+
+      // 2. Ação ao clicar em "Gerar PDF"
+      document.getElementById('form-ficha').onsubmit = function(event) {
+        event.preventDefault();
+        
+        var nomeAluno = document.getElementById('select-aluno').value;
+        var selectExercicios = document.getElementById('select-exercicios');
+        var exerciciosSelecionados = [];
+
+        for (var i = 0; i < selectExercicios.options.length; i++) {
+          if (selectExercicios.options[i].selected) {
+            exerciciosSelecionados.push(selectExercicios.options[i].value);
+          }
+        }
+
+        if (!nomeAluno) {
+          alert("Por favor, selecione um aluno.");
+          return;
+        }
+
+        if (exerciciosSelecionados.length === 0) {
+          alert("Por favor, selecione ao menos um exercício.");
+          return;
+        }
+
+        // Monta a estrutura HTML que será convertida em PDF
+        var dataHoje = new Date().toLocaleDateString('pt-BR');
+        var listaExerciciosHTML = '';
+        for (var j = 0; j < exerciciosSelecionados.length; j++) {
+          listaExerciciosHTML += '<li style="padding: 8px 0; border-bottom: 1px solid #eee;">' + (j + 1) + '. ' + exerciciosSelecionados[j] + '</li>';
+        }
+
+        var conteudoPDF = `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+            <h1 style="color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 10px;">Ficha de Treino</h1>
+            <p><strong>Aluno:</strong> ${nomeAluno}</p>
+            <p><strong>Data de Emissão:</strong> ${dataHoje}</p>
+            
+            <h3 style="margin-top: 20px; color: #555;">Exercícios Prescritos:</h3>
+            <ul style="list-style: none; padding-left: 0;">
+              ${listaExerciciosHTML}
+            </ul>
+
+            <div style="margin-top: 40px; border-top: 1px dashed #aaa; padding-top: 10px; font-size: 12px; color: #777;">
+              <p>Assinatura do Personal: _____________________________________</p>
+            </div>
+          </div>
+        `;
+
+        // Configurações do arquivo PDF
+        var opt = {
+          margin:       10,
+          filename:     'Ficha_Treino_' + nomeAluno.replace(/\s+/g, '_') + '.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2 },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Gera e baixa o documento PDF
+        html2pdf().set(opt).from(conteudoPDF).save();
+      };
+    };
+  </script>
+
+</body>
+</html>

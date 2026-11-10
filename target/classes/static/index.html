@@ -127,6 +127,13 @@
 
     </div>
 
+    <!-- Botões de Ação Rápida -->
+    <div style="margin-top: 2rem;">
+      <a href="novo-aluno.html" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block;">+ Novo Aluno</a>
+      <a href="agendamento.html" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block; margin-left: 10px; background-color: #007bff; color: white;">+ Novo Agendamento</a>
+      <a href="montar-ficha.html" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block; margin-left: 10px; background-color: #28a745; color: white;">+ Montar Ficha de Treino</a>
+    </div>
+
   </main>
 
   <script>
@@ -243,7 +250,6 @@
         }
 
         function carregarAtendimentos() {
-          // Ajusta para o endpoint '/api/atendimentos' ou '/atendimentos' conforme o teu Controller
           fetch('http://localhost:8081/api/atendimentos')
             .then(function(resposta) {
               return resposta.json();
@@ -279,10 +285,5 @@
         }
       </script>
 	
-	<div style="margin-top: 2rem;">
-	  <a href="novo-aluno.html" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block;">+ Novo Aluno</a>
-	  <a href="agendamento.html" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block; margin-left: 10px; background-color: #007bff; color: white;">+ Novo Agendamento</a>
-	</div>
-	
 </body>
-</html>
+</html>preciso

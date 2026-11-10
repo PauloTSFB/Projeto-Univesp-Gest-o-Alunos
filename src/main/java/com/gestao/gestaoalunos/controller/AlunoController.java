@@ -48,4 +48,14 @@ public class AlunoController {
         alunoService.deletar(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Endpoint utilitário para popular o dropdown/select de alunos no front-end.
+     * Reutiliza o método listarTodos() que você já tem no AlunoService.
+     */
+    @GetMapping("/selecao")
+    public ResponseEntity<List<Aluno>> listarParaSelecao() {
+        List<Aluno> alunos = alunoService.listarTodos();
+        return ResponseEntity.ok(alunos);
+    }
 }
